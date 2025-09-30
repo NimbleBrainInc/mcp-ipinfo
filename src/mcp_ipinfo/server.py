@@ -1,3 +1,4 @@
+import asyncio
 import os
 from typing import Any
 
@@ -5,8 +6,8 @@ from fastapi import Request
 from fastapi.responses import JSONResponse
 from mcp.server.fastmcp import Context, FastMCP
 
-from .api_client import IPInfoAPIError, IPInfoClient
-from .api_models import (
+from mcp_ipinfo.api_client import IPInfoAPIError, IPInfoClient
+from mcp_ipinfo.api_models import (
     AbuseResponse,
     AsnResponse,
     CarrierResponse,
@@ -536,11 +537,6 @@ async def get_ip_org(ctx: Context[Any, Any, Any], ip: str | None = None) -> str:
         ctx.error(f"API error: {e.message}")
         raise
 
+# Create ASGI application for uvicorn
+app = mcp.streamable_http_app()
 
-def main() -> None:
-    """Main entry point for MCP server."""
-    mcp.run()
-
-
-if __name__ == "__main__":
-    main()

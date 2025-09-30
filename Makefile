@@ -1,3 +1,7 @@
+# Docker image configuration
+IMAGE_NAME = nimbletools/mcp-ipinfo
+VERSION ?= latest
+
 .PHONY: help install dev-install format lint test clean run check all
 
 help: ## Show this help message
@@ -30,6 +34,20 @@ test: ## Run tests with pytest
 test-cov: ## Run tests with coverage
 	uv run pytest tests/ -v --cov=src/mcp_ipinfo --cov-report=term-missing
 
+build-push:
+	docker buildx build --platform linux/amd64,linux/arm64 \
+		-t $(IMAGE_NAME):$(VERSION) \
+		-t $(IMAGE_NAME):latest \
+		--push .
+
+# Login to Docker Hub
+login:
+	docker login
+
+# Clean up local images
+clean-docker:
+	docker rmi $(IMAGE_NAME):$(VERSION) $(IMAGE_NAME):latest 2>/dev/null || true
+	
 clean: ## Clean up build artifacts and cache
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 	find . -type f -name "*.pyc" -delete

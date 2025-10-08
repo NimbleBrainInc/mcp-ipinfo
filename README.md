@@ -1,5 +1,8 @@
 # MCP Server IPInfo
 
+![GitHub License](https://img.shields.io/github/license/nimblebraininc/mcp-ipinfo)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/nimblebraininc/mcp-ipinfo/ci.yaml)
+
 This is a version of the MCP Server for IPInfo that implements the complete IPInfo OpenAPI specification with strongly-typed models and comprehensive tool coverage.
 
 ## Features
@@ -162,6 +165,11 @@ from mcp_ipinfo.api_models import (
 - fastmcp
 - pydantic
 - mcp
+
+## About
+
+Part of the [NimbleTools](https://www.nimbletools.ai) ecosystem.
+From the makers of [NimbleBrain](https://www.nimblebrain.ai). 
 
 ## License
 

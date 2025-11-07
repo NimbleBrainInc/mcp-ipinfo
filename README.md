@@ -5,6 +5,10 @@
 
 This is a version of the MCP Server for IPInfo that implements the complete IPInfo OpenAPI specification with strongly-typed models and comprehensive tool coverage.
 
+<a href="https://glama.ai/mcp/servers/@NimbleBrainInc/mcp-ipinfo">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@NimbleBrainInc/mcp-ipinfo/badge" alt="IPInfo Server MCP server" />
+</a>
+
 ## Features
 
 - **Full OpenAPI Spec Implementation**: Complete implementation of IPInfo's OpenAPI specification

@@ -9,7 +9,6 @@ from mcp_ipinfo.server import (
     batch_lookup,
     get_abuse_contact,
     get_account_info,
-    get_asn_info,
     get_carrier_info,
     get_company_info,
     get_hosted_domains,
@@ -23,7 +22,6 @@ from mcp_ipinfo.server import (
     get_ip_ranges,
     get_ip_region,
     get_ip_timezone,
-    get_privacy_info,
     map_ips,
     summarize_ips,
     whois_lookup_by_ip,
@@ -139,22 +137,6 @@ class TestMCPTools:
             mock_client.map_ips.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_get_asn_info(self, mock_context):
-        """Test get_asn_info tool."""
-        with patch("mcp_ipinfo.server.get_client") as mock_get_client:
-            mock_client = AsyncMock()
-            mock_get_client.return_value = mock_client
-            mock_client.get_asn.return_value = MagicMock(
-                asn="AS15169",
-                name="Google LLC",
-            )
-
-            result = await get_asn_info(15169, mock_context)
-
-            assert result.asn == "AS15169"
-            mock_client.get_asn.assert_called_once_with(15169)
-
-    @pytest.mark.asyncio
     async def test_get_company_info(self, mock_context):
         """Test get_company_info tool."""
         with patch("mcp_ipinfo.server.get_client") as mock_get_client:
@@ -186,24 +168,6 @@ class TestMCPTools:
 
             assert result.name == "Verizon"
             mock_client.get_carrier.assert_called_once_with("1.2.3.4")
-
-    @pytest.mark.asyncio
-    async def test_get_privacy_info(self, mock_context):
-        """Test get_privacy_info tool."""
-        with patch("mcp_ipinfo.server.get_client") as mock_get_client:
-            mock_client = AsyncMock()
-            mock_get_client.return_value = mock_client
-            mock_client.get_privacy.return_value = MagicMock(
-                vpn=True,
-                proxy=False,
-                service="NordVPN",
-            )
-
-            result = await get_privacy_info("1.2.3.4", mock_context)
-
-            assert result.vpn is True
-            assert result.service == "NordVPN"
-            mock_client.get_privacy.assert_called_once_with("1.2.3.4")
 
     @pytest.mark.asyncio
     async def test_get_hosted_domains(self, mock_context):

@@ -71,21 +71,21 @@ Add this configuration to your Claude Code settings:
 ### Core IP Information
 
 - `get_ip_info(ip?)` - Get comprehensive IP information
-- `get_ip_details(ip?)` - Legacy tool for backward compatibility
+- `get_plus_ip_info(ip)` - Get full IP intelligence via Plus API (includes privacy detection)
 - `get_account_info()` - Get API account limits and features
 - `batch_lookup(ips[])` - Batch lookup multiple IPs
 - `summarize_ips(ips[])` - Get summary statistics for IP list
 - `map_ips(ips[])` - Create visual map of IP locations
 
-### ASN & Company
+### Company & Carrier
 
-- `get_asn_info(asn)` - Get Autonomous System information
 - `get_company_info(ip)` - Get company details for an IP
 - `get_carrier_info(ip)` - Get mobile carrier information
 
 ### Privacy & Security
 
-- `get_privacy_info(ip)` - Detect VPN, proxy, Tor, etc.
+- `get_plus_ip_info(ip)` - Detect VPN, proxy, Tor, relay (via Plus API)
+- `get_residential_proxy_info(ip)` - Detect residential proxy services
 - `get_abuse_contact(ip)` - Get abuse contact information
 
 ### Network Information
@@ -137,9 +137,10 @@ async def main():
         google = await client.get_info_by_ip("8.8.8.8")
         print(f"Google DNS: {google.org}")
 
-        # Privacy detection
-        privacy = await client.get_privacy("1.1.1.1")
-        print(f"VPN detected: {privacy.vpn}")
+        # Privacy detection via Plus API
+        plus_info = await client.get_plus_info("1.1.1.1")
+        print(f"VPN detected: {plus_info.anonymous.is_vpn}")
+        print(f"ASN: {plus_info.as_info.asn}")
 
 asyncio.run(main())
 ```
@@ -150,10 +151,10 @@ All models are strongly typed using Pydantic:
 
 ```python
 from mcp_ipinfo.api_models import (
-    FullResponse,     # Complete IP information
-    AsnResponse,      # ASN details
-    CompanyResponse,  # Company information
-    PrivacyResponse,  # Privacy detection results
+    FullResponse,      # Basic IP information
+    PlusResponse,      # Comprehensive IP intelligence (geo, ASN, privacy)
+    CompanyResponse,   # Company information
+    RangesResponse,    # IP ranges for a domain
     # ... and many more
 )
 ```

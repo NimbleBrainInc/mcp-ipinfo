@@ -5,9 +5,9 @@ description = "IP Geolocation MCP Server with OpenAPI support"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "aiohttp>=3.12.15",
-    "fastapi>=0.117.1",
-    "fastmcp>=2.12.4",
+    "aiohttp>=3.13.2",
+    "fastapi>=0.127.0",
+    "fastmcp>=2.14.1",
 ]
 
 # Entry point removed - use fastmcp CLI instead:
@@ -65,9 +65,9 @@ disable_error_code = ["unused-coroutine", "misc"]
 
 [dependency-groups]
 dev = [
-    "mypy>=1.18.2",
-    "pytest>=8.4.2",
+    "mypy>=1.19.1",
+    "pytest>=9.0.2",
     "pytest-asyncio>=1.2.0",
     "pytest-cov>=7.0.0",
-    "ruff>=0.13.1",
+    "ruff>=0.14.10",
 ]

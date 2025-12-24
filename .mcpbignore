@@ -1,0 +1,45 @@
+# Development environment (deps/ is created by build action)
+.venv/
+.git/
+.github/
+.pytest_cache/
+__pycache__/
+*.pyc
+
+# Cache directories
+.mypy_cache/
+.ruff_cache/
+.coverage
+
+# Test files
+tests/
+tests-integration/
+e2e/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+*.mcpb
+
+# Dev config
+Makefile
+pytest.ini
+.env
+.env.*
+cspell.json
+example_usage.py
+
+# Lock files
+uv.lock
+
+# IDE
+.vscode/
+.idea/
+
+# Specs and docs (not needed in bundle)
+spec/
+CLAUDE.md
+
+# Images
+*.png

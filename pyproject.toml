@@ -6,7 +6,6 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "aiohttp>=3.13.2",
-    "fastapi>=0.127.0",
     "fastmcp>=2.14.1",
 ]
 

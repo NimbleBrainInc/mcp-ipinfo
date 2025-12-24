@@ -5,7 +5,7 @@ VERSION ?= 1.0.0
 # Docker image configuration (legacy)
 IMAGE_NAME = nimbletools/mcp-ipinfo
 
-.PHONY: help install dev-install format lint test test-integration test-all clean run check all bundle bundle-run
+.PHONY: help install dev-install format format-check lint test test-integration test-all clean run check all bundle bundle-run
 
 help: ## Show this help message
 	@echo 'Usage: make [target]'
@@ -21,6 +21,9 @@ dev-install: ## Install the package with dev dependencies
 
 format: ## Format code with ruff
 	uv run ruff format src/ tests/ tests-integration/
+
+format-check: ## Check code formatting with ruff
+	uv run ruff format --check src/ tests/ tests-integration/
 
 lint: ## Lint code with ruff
 	uv run ruff check src/ tests/ tests-integration/
@@ -97,7 +100,7 @@ run: ## Run the MCP server
 run-http: ## Run the MCP server with HTTP transport
 	IPINFO_API_TOKEN=$${IPINFO_API_TOKEN} uv run python -m mcp_ipinfo.server
 
-check: lint typecheck test ## Run linting, type checking, and tests
+check: format-check lint typecheck test ## Run all checks
 
 all: clean install format lint typecheck test ## Clean, install, format, lint, type check, and test
 

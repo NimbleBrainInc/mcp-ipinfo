@@ -10,13 +10,11 @@ from aiohttp import ClientError
 from mcp_ipinfo.api_client import IPInfoAPIError, IPInfoClient
 from mcp_ipinfo.api_models import (
     AbuseResponse,
-    AsnResponse,
     CarrierResponse,
     CompanyResponse,
     DomainsResponse,
     FullResponse,
     MeResponse,
-    PrivacyResponse,
     RangesResponse,
 )
 
@@ -140,23 +138,6 @@ class TestIPInfoClient:
         assert "1.1.1.1" in result
 
     @pytest.mark.asyncio
-    async def test_get_asn(self, mock_client):
-        """Test getting ASN information."""
-        mock_response = {
-            "asn": "AS15169",
-            "name": "Google LLC",
-            "domain": "google.com",
-            "type": "hosting",
-        }
-
-        with patch.object(mock_client, "_request", return_value=mock_response):
-            result = await mock_client.get_asn(15169)
-
-        assert isinstance(result, AsnResponse)
-        assert result.asn == "AS15169"
-        assert result.name == "Google LLC"
-
-    @pytest.mark.asyncio
     async def test_get_company(self, mock_client):
         """Test getting company information."""
         mock_response = {
@@ -187,25 +168,6 @@ class TestIPInfoClient:
         assert isinstance(result, CarrierResponse)
         assert result.name == "Verizon"
         assert result.mcc == "310"
-
-    @pytest.mark.asyncio
-    async def test_get_privacy(self, mock_client):
-        """Test getting privacy information."""
-        mock_response = {
-            "vpn": True,
-            "proxy": False,
-            "tor": False,
-            "hosting": False,
-            "relay": False,
-            "service": "NordVPN",
-        }
-
-        with patch.object(mock_client, "_request", return_value=mock_response):
-            result = await mock_client.get_privacy("1.2.3.4")
-
-        assert isinstance(result, PrivacyResponse)
-        assert result.vpn is True
-        assert result.service == "NordVPN"
 
     @pytest.mark.asyncio
     async def test_get_domains(self, mock_client):

@@ -6,14 +6,14 @@ from aiohttp import ClientError
 
 from .api_models import (
     AbuseResponse,
-    AsnResponse,
     CarrierResponse,
     CompanyResponse,
     DomainsResponse,
     FullResponse,
     MeResponse,
-    PrivacyResponse,
+    PlusResponse,
     RangesResponse,
+    ResidentialProxyResponse,
     WhoisAsnResponse,
     WhoisDomainResponse,
     WhoisIpResponse,
@@ -176,13 +176,6 @@ class IPInfoClient:
         )
         return data
 
-    # ASN endpoints
-
-    async def get_asn(self, asn: int) -> AsnResponse:
-        """Get information about an ASN."""
-        data = await self._request("GET", f"/AS{asn}")
-        return AsnResponse(**data)
-
     # Company endpoints
 
     async def get_company(self, ip: str) -> CompanyResponse:
@@ -226,12 +219,59 @@ class IPInfoClient:
         data = await self._request("GET", f"/{ip}/abuse")
         return AbuseResponse(**data)
 
-    # Privacy endpoints
+    # Residential Proxy endpoints
 
-    async def get_privacy(self, ip: str) -> PrivacyResponse:
-        """Get privacy information for an IP."""
-        data = await self._request("GET", f"/{ip}/privacy")
-        return PrivacyResponse(**data)
+    async def get_residential_proxy(self, ip: str) -> ResidentialProxyResponse:
+        """Get residential proxy information for an IP.
+
+        Returns activity data if the IP is associated with a residential proxy,
+        including the proxy service name and activity patterns.
+        Returns empty/null fields if not a residential proxy.
+        """
+        data = await self._request("GET", f"/resproxy/{ip}")
+        # API returns empty {} for non-proxy IPs, handle gracefully
+        if not data:
+            return ResidentialProxyResponse(
+                ip=None, last_seen=None, percent_days_seen=None, service=None
+            )
+        return ResidentialProxyResponse(**data)
+
+    # Plus API endpoints (https://api.ipinfo.io)
+
+    async def get_plus_info(self, ip: str) -> PlusResponse:
+        """Get comprehensive IP information using the Plus API.
+
+        The Plus API provides detailed geolocation, ASN, privacy detection,
+        and network characteristics in a single call.
+
+        Args:
+            ip: IP address to lookup (or 'me' for current IP)
+
+        Returns:
+            Comprehensive IP data including geo, ASN, privacy flags, and more.
+        """
+        # Plus API uses different base URL
+        await self._ensure_session()
+        url = f"https://api.ipinfo.io/lookup/{ip}"
+        params = {"token": self.api_token} if self.api_token else {}
+
+        try:
+            if not self._session:
+                raise RuntimeError("Session not initialized")
+            async with self._session.get(url, params=params) as response:
+                result = await response.json()
+
+                if response.status >= 400:
+                    error_msg = result.get("error", {}).get("message", "Unknown error")
+                    raise IPInfoAPIError(response.status, error_msg, result)
+
+                return PlusResponse(**result)
+        except ClientError as e:
+            raise IPInfoAPIError(500, f"Network error: {str(e)}") from e
+
+    async def get_plus_current_info(self) -> PlusResponse:
+        """Get comprehensive information about the current IP using Plus API."""
+        return await self.get_plus_info("me")
 
     # WHOIS endpoints
 

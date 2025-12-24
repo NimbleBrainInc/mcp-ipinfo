@@ -33,11 +33,11 @@ jobs:
 
       - name: Run linting
         run: |
-          uv run ruff check src/ tests/
+          uv run ruff check src/ tests/ tests-integration/
 
       - name: Run formatting check
         run: |
-          uv run ruff format --check src/ tests/
+          uv run ruff format --check src/ tests/ tests-integration/
 
       - name: Run type checking
         run: |
@@ -70,11 +70,11 @@ jobs:
 
       - name: Run linting
         run: |
-          uv run ruff check src/ tests/
+          uv run ruff check src/ tests/ tests-integration/
 
       - name: Run formatting check
         run: |
-          uv run ruff format --check src/ tests/
+          uv run ruff format --check src/ tests/ tests-integration/
 
   typecheck:
     runs-on: ubuntu-latest

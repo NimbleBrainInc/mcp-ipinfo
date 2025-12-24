@@ -8,14 +8,14 @@ from mcp.server.fastmcp import Context, FastMCP
 from mcp_ipinfo.api_client import IPInfoAPIError, IPInfoClient
 from mcp_ipinfo.api_models import (
     AbuseResponse,
-    AsnResponse,
     CarrierResponse,
     CompanyResponse,
     DomainsResponse,
     FullResponse,
     MeResponse,
-    PrivacyResponse,
+    PlusResponse,
     RangesResponse,
+    ResidentialProxyResponse,
     WhoisSource,
 )
 
@@ -38,7 +38,7 @@ def get_client(ctx: Context[Any, Any, Any]) -> IPInfoClient:
 
 
 # Health endpoint for HTTP transport
-@mcp.custom_route("/health", methods=["GET"])
+@mcp.custom_route("/health", methods=["GET"])  # type: ignore[untyped-decorator]
 async def health_check(request: Request) -> JSONResponse:
     """Health check endpoint for monitoring."""
     return JSONResponse({"status": "healthy"})
@@ -140,27 +140,6 @@ async def map_ips(ips: list[str], ctx: Context[Any, Any, Any]) -> dict[str, Any]
         raise
 
 
-# ASN tools
-
-
-@mcp.tool()
-async def get_asn_info(asn: int, ctx: Context[Any, Any, Any]) -> AsnResponse:
-    """Get information about an Autonomous System Number (ASN).
-
-    Args:
-        asn: The ASN number (without 'AS' prefix)
-
-    Returns:
-        ASN information including prefixes, peers, and network details.
-    """
-    client = get_client(ctx)
-    try:
-        return await client.get_asn(asn)
-    except IPInfoAPIError as e:
-        ctx.error(f"API error: {e.message}")
-        raise
-
-
 # Company tools
 
 
@@ -203,22 +182,54 @@ async def get_carrier_info(ip: str, ctx: Context[Any, Any, Any]) -> CarrierRespo
         raise
 
 
-# Privacy detection tools
+# Residential proxy and Plus API tools
 
 
 @mcp.tool()
-async def get_privacy_info(ip: str, ctx: Context[Any, Any, Any]) -> PrivacyResponse:
-    """Detect privacy services (VPN, proxy, Tor, etc.) for an IP address.
+async def get_residential_proxy_info(
+    ip: str, ctx: Context[Any, Any, Any]
+) -> ResidentialProxyResponse:
+    """Detect if an IP is a residential proxy and get activity details.
+
+    Identifies IPs associated with residential proxy services, including mobile/carrier
+    and datacenter-based proxies. Useful for fraud detection and risk assessment.
 
     Args:
         ip: IP address to check
 
     Returns:
-        Privacy detection results including VPN, proxy, Tor, relay, and hosting status.
+        Residential proxy data including service name, last seen date, and activity
+        percentage. Returns empty fields if the IP is not a residential proxy.
     """
     client = get_client(ctx)
     try:
-        return await client.get_privacy(ip)
+        return await client.get_residential_proxy(ip)
+    except IPInfoAPIError as e:
+        ctx.error(f"API error: {e.message}")
+        raise
+
+
+@mcp.tool()
+async def get_plus_ip_info(ip: str, ctx: Context[Any, Any, Any]) -> PlusResponse:
+    """Get comprehensive IP intelligence using the Plus API.
+
+    Returns detailed geolocation, ASN information, privacy/anonymity detection,
+    and network characteristics in a single call. This is the recommended endpoint
+    for complete IP analysis.
+
+    Args:
+        ip: IP address to lookup
+
+    Returns:
+        Comprehensive data including:
+        - geo: City, region, country, coordinates, timezone
+        - as_info: ASN, organization name, domain, type
+        - anonymous: VPN, proxy, Tor, relay detection
+        - Flags: is_anonymous, is_hosting, is_mobile, is_anycast, is_satellite
+    """
+    client = get_client(ctx)
+    try:
+        return await client.get_plus_info(ip)
     except IPInfoAPIError as e:
         ctx.error(f"API error: {e.message}")
         raise

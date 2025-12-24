@@ -2,7 +2,7 @@
 IMAGE_NAME = nimbletools/mcp-ipinfo
 VERSION ?= latest
 
-.PHONY: help install dev-install format lint test clean run check all
+.PHONY: help install dev-install format lint test test-integration test-all clean run check all
 
 help: ## Show this help message
 	@echo 'Usage: make [target]'
@@ -17,13 +17,13 @@ dev-install: ## Install the package with dev dependencies
 	uv pip install -e ".[dev]"
 
 format: ## Format code with ruff
-	uv run ruff format src/ tests/
+	uv run ruff format src/ tests/ tests-integration/
 
 lint: ## Lint code with ruff
-	uv run ruff check src/ tests/
+	uv run ruff check src/ tests/ tests-integration/
 
 lint-fix: ## Lint and fix code with ruff
-	uv run ruff check --fix src/ tests/
+	uv run ruff check --fix src/ tests/ tests-integration/
 
 typecheck: ## Type check code with mypy
 	uv run mypy src/
@@ -33,6 +33,32 @@ test: ## Run tests with pytest
 
 test-cov: ## Run tests with coverage
 	uv run pytest tests/ -v --cov=src/mcp_ipinfo --cov-report=term-missing
+
+test-integration: ## Run integration tests (requires IPINFO_API_TOKEN)
+	@if [ -z "$${IPINFO_API_TOKEN}" ]; then \
+		echo "ERROR: IPINFO_API_TOKEN environment variable is required."; \
+		echo "Set it before running integration tests:"; \
+		echo "  export IPINFO_API_TOKEN=your_token_here"; \
+		echo "  make test-integration"; \
+		exit 1; \
+	fi
+	uv run pytest tests-integration/ -v
+
+test-integration-verbose: ## Run integration tests with full output
+	@if [ -z "$${IPINFO_API_TOKEN}" ]; then \
+		echo "ERROR: IPINFO_API_TOKEN required. Run: export IPINFO_API_TOKEN=your_token"; \
+		exit 1; \
+	fi
+	uv run pytest tests-integration/ -v -s
+
+test-use-cases: ## Run only use case scenario tests
+	@if [ -z "$${IPINFO_API_TOKEN}" ]; then \
+		echo "ERROR: IPINFO_API_TOKEN required."; \
+		exit 1; \
+	fi
+	uv run pytest tests-integration/test_use_cases.py -v -s
+
+test-all: test test-integration ## Run all tests (unit + integration)
 
 build-push:
 	docker buildx build --platform linux/amd64,linux/arm64 \

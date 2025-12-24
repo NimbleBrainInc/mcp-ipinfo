@@ -1,8 +1,11 @@
-# Docker image configuration
-IMAGE_NAME = nimbletools/mcp-ipinfo
-VERSION ?= latest
+# MCPB bundle configuration
+BUNDLE_NAME = mcp-ipinfo
+VERSION ?= 1.0.0
 
-.PHONY: help install dev-install format lint test test-integration test-all clean run check all
+# Docker image configuration (legacy)
+IMAGE_NAME = nimbletools/mcp-ipinfo
+
+.PHONY: help install dev-install format lint test test-integration test-all clean run check all bundle bundle-run
 
 help: ## Show this help message
 	@echo 'Usage: make [target]'
@@ -83,8 +86,10 @@ clean: ## Clean up build artifacts and cache
 	find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name ".ruff_cache" -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name ".mypy_cache" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name "build" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name "dist" -exec rm -rf {} + 2>/dev/null || true
+	rm -rf bundle/ *.mcpb
 
 run: ## Run the MCP server
 	uv run python -m mcp_ipinfo.server
@@ -95,6 +100,20 @@ run-http: ## Run the MCP server with HTTP transport
 check: lint typecheck test ## Run linting, type checking, and tests
 
 all: clean install format lint typecheck test ## Clean, install, format, lint, type check, and test
+
+# MCPB bundle commands
+bundle: ## Build MCPB bundle locally
+	@./scripts/build-bundle.sh . $(VERSION)
+
+bundle-run: bundle ## Build and run MCPB bundle locally
+	@echo "Starting bundle with mcpb-python base image..."
+	@python -m http.server 9999 --directory . &
+	@sleep 1
+	docker run --rm \
+		--add-host host.docker.internal:host-gateway \
+		-p 8000:8000 \
+		-e BUNDLE_URL=http://host.docker.internal:9999/$(BUNDLE_NAME)-v$(VERSION).mcpb \
+		ghcr.io/nimblebrain/mcpb-python:3.14
 
 # Development shortcuts
 fmt: format ## Alias for format

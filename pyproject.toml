@@ -1,6 +1,6 @@
 [project]
 name = "mcp-ipinfo"
-version = "0.1.0"
+version = "1.1.0"
 description = "IP Geolocation MCP Server with OpenAPI support"
 readme = "README.md"
 requires-python = ">=3.13"

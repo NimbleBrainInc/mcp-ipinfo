@@ -90,3 +90,53 @@ IPINFO_API_TOKEN=xxx  # Required for API access
 ```bash
 uv run mcp-ipinfo
 ```
+
+## Releasing
+
+This server uses MCPB bundles. Releases are manual via git tags.
+
+### Create a Release
+
+```bash
+# 1. Ensure you're on main with latest
+git checkout main && git pull
+
+# 2. Tag the release
+git tag v1.0.0
+git push origin v1.0.0
+
+# 3. GitHub Actions builds bundles automatically
+# Check: https://github.com/NimbleBrainInc/mcp-ipinfo/actions
+
+# 4. Get SHA256 hashes from release page
+# Update mcp-registry/servers/ipinfo/server.json with new version and hashes
+```
+
+### Manual Workflow Dispatch (alternative)
+
+```bash
+gh workflow run build-bundle.yml -f version=1.0.0
+```
+
+### Local Bundle Testing
+
+```bash
+# Build deps using runtime image
+docker run --rm -v "$(pwd):/app" -w /app --entrypoint bash \
+  nimbletools/mcpb-python:3.14 -c \
+  "pip install uv && ~/.local/bin/uv pip install --target ./deps ."
+
+# Pack and test
+mcpb pack . mcp-ipinfo-v1.0.0.mcpb
+python3 -m http.server 9999 &
+docker run --rm -p 8000:8000 \
+  --add-host host.docker.internal:host-gateway \
+  -e BUNDLE_URL=http://host.docker.internal:9999/mcp-ipinfo-v1.0.0.mcpb \
+  nimbletools/mcpb-python:3.14
+
+# Verify
+curl http://localhost:8000/health
+
+# Cleanup
+rm -rf deps/ *.mcpb
+```

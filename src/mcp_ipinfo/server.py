@@ -571,5 +571,10 @@ async def get_ip_org(ctx: Context | None = None, ip: str | None = None) -> str:
         raise
 
 
-# Create ASGI application for deployment
+# Create ASGI application for HTTP deployment
 app = mcp.http_app()
+
+
+# Stdio entrypoint for Claude Desktop / mpak
+if __name__ == "__main__":
+    mcp.run()

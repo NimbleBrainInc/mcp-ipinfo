@@ -1,6 +1,6 @@
 {
   "manifest_version": "0.3",
-  "name": "ai.nimbletools/ipinfo",
+  "name": "@nimblebraininc/ipinfo",
   "version": "0.1.0",
   "description": "IP intelligence server with geolocation, ASN, company, and privacy detection",
   "author": {

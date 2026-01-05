@@ -6,12 +6,24 @@
   "author": {
     "name": "NimbleBrain Inc"
   },
+  "user_config": {
+    "api_key": {
+      "type": "string",
+      "title": "IPInfo API Token",
+      "description": "Your IPInfo API token from https://ipinfo.io/account/token",
+      "sensitive": true,
+      "required": false
+    }
+  },
   "server": {
     "type": "python",
     "entry_point": "mcp_ipinfo.server",
     "mcp_config": {
       "command": "python",
-      "args": ["-m", "mcp_ipinfo.server"]
+      "args": ["-m", "mcp_ipinfo.server"],
+      "env": {
+        "IPINFO_API_TOKEN": "${user_config.api_key}"
+      }
     }
   }
 }

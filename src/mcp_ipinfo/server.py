@@ -1,4 +1,7 @@
+import logging
 import os
+import signal
+import sys
 from typing import Any
 
 from fastmcp import Context, FastMCP
@@ -6,6 +9,28 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 
 from mcp_ipinfo.api_client import IPInfoAPIError, IPInfoClient
+
+# Debug logging for container diagnostics
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    stream=sys.stderr,
+)
+logger = logging.getLogger("mcp_ipinfo")
+
+
+# Signal handler to prevent uvicorn lifespan CancelledError
+def _signal_handler(signum, frame):
+    logger.warning("Received signal %s (%s)", signum, signal.Signals(signum).name)
+
+
+# Register signal handlers
+for sig in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
+    try:
+        signal.signal(sig, _signal_handler)
+        logger.debug("Registered handler for %s", sig.name)
+    except (ValueError, OSError) as e:
+        logger.debug("Could not register handler for %s: %s", sig.name, e)
 from mcp_ipinfo.api_models import (
     AbuseResponse,
     CarrierResponse,

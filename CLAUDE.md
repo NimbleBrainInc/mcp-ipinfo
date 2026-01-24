@@ -86,7 +86,7 @@ gh release create v0.1.1 --title "v0.1.1" --notes "- changelog"
 
 ```bash
 mpak config set @nimblebraininc/ipinfo IPINFO_API_TOKEN=xxx
-mpak run @nimblebraininc/ipinfo
+mpak bundle run @nimblebraininc/ipinfo
 ```
 
 Claude Code config (`~/.claude/settings.json`):
@@ -95,7 +95,7 @@ Claude Code config (`~/.claude/settings.json`):
   "mcpServers": {
     "ipinfo": {
       "command": "mpak",
-      "args": ["run", "@nimblebraininc/ipinfo"]
+      "args": ["bundle", "run", "@nimblebraininc/ipinfo"]
     }
   }
 }

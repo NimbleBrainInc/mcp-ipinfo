@@ -1,10 +1,15 @@
 {
-  "manifest_version": "0.3",
+  "manifest_version": "0.4",
   "name": "@nimblebraininc/ipinfo",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "IP intelligence server with geolocation, ASN, company, and privacy detection",
   "author": {
-    "name": "NimbleBrain Inc"
+    "name": "NimbleBrain Inc",
+    "email": "hello@nimblebrain.ai"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NimbleBrainInc/mcp-ipinfo"
   },
   "user_config": {
     "api_key": {
@@ -20,9 +25,118 @@
     "entry_point": "mcp_ipinfo.server",
     "mcp_config": {
       "command": "python",
-      "args": ["-m", "mcp_ipinfo.server"],
+      "args": [
+        "-m",
+        "mcp_ipinfo.server"
+      ],
       "env": {
         "IPINFO_API_TOKEN": "${user_config.api_key}"
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "get_ip_info",
+      "description": "Get comprehensive information about an IP address"
+    },
+    {
+      "name": "get_account_info",
+      "description": "Get IPInfo account information and API limits"
+    },
+    {
+      "name": "batch_lookup",
+      "description": "Batch lookup multiple IP addresses"
+    },
+    {
+      "name": "summarize_ips",
+      "description": "Summarize a list of IP addresses with statistics and insights"
+    },
+    {
+      "name": "map_ips",
+      "description": "Create a visual map of IP address locations"
+    },
+    {
+      "name": "get_company_info",
+      "description": "Get company information for an IP address"
+    },
+    {
+      "name": "get_carrier_info",
+      "description": "Get mobile carrier information for an IP address"
+    },
+    {
+      "name": "get_residential_proxy_info",
+      "description": "Detect if an IP is a residential proxy and get activity details"
+    },
+    {
+      "name": "get_plus_ip_info",
+      "description": "Get comprehensive IP intelligence using the Plus API"
+    },
+    {
+      "name": "get_hosted_domains",
+      "description": "Get domains hosted on an IP address"
+    },
+    {
+      "name": "get_ip_ranges",
+      "description": "Get IP ranges owned by a domain or organization"
+    },
+    {
+      "name": "get_abuse_contact",
+      "description": "Get abuse contact information for an IP address"
+    },
+    {
+      "name": "whois_lookup_by_ip",
+      "description": "WHOIS lookup by IP address or IP range"
+    },
+    {
+      "name": "whois_lookup_by_domain",
+      "description": "WHOIS lookup by organization domain"
+    },
+    {
+      "name": "whois_lookup_by_asn",
+      "description": "WHOIS lookup by ASN"
+    },
+    {
+      "name": "get_ip_city",
+      "description": "Get just the city for an IP address"
+    },
+    {
+      "name": "get_ip_country",
+      "description": "Get just the country code for an IP address"
+    },
+    {
+      "name": "get_ip_region",
+      "description": "Get just the region or state for an IP address"
+    },
+    {
+      "name": "get_ip_location",
+      "description": "Get just the coordinates for an IP address"
+    },
+    {
+      "name": "get_ip_postal",
+      "description": "Get just the postal code for an IP address"
+    },
+    {
+      "name": "get_ip_timezone",
+      "description": "Get just the timezone for an IP address"
+    },
+    {
+      "name": "get_ip_hostname",
+      "description": "Get just the hostname for an IP address"
+    },
+    {
+      "name": "get_ip_org",
+      "description": "Get just the organization and ASN for an IP address"
+    }
+  ],
+  "_meta": {
+    "org.mpaktrust": {
+      "mtf_version": "0.1",
+      "permissions": {
+        "filesystem": "none",
+        "network": "outbound",
+        "environment": "read",
+        "subprocess": "none",
+        "native": "none"
       }
     }
   }

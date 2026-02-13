@@ -6,7 +6,7 @@
 __pycache__/
 *.pyc
 
-# Cache directories
+# Tool caches
 .mypy_cache/
 .ruff_cache/
 .coverage
@@ -25,6 +25,7 @@ build/
 # Dev config
 Makefile
 pytest.ini
+pyproject.toml
 .env
 .env.*
 cspell.json
@@ -33,13 +34,19 @@ example_usage.py
 # Lock files
 uv.lock
 
+# Scripts
+scripts/
+
+# Claude Code
+.claude/
+CLAUDE.md
+
 # IDE
 .vscode/
 .idea/
 
 # Specs and docs (not needed in bundle)
 spec/
-CLAUDE.md
 
 # Images
 *.png

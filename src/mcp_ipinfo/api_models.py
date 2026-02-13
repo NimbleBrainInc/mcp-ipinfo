@@ -1,10 +1,10 @@
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, Field
 
 
-class CompanyType(str, Enum):
+class CompanyType(StrEnum):
     ISP = "isp"
     BUSINESS = "business"
     EDUCATION = "education"
@@ -12,7 +12,7 @@ class CompanyType(str, Enum):
     INACTIVE = "inactive"
 
 
-class WhoisSource(str, Enum):
+class WhoisSource(StrEnum):
     ARIN = "arin"
     RIPE = "ripe"
     AFRINIC = "afrinic"

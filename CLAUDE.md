@@ -22,6 +22,19 @@ src/mcp_ipinfo/
       mcp.run()  # Stdio for Claude Desktop / mpak
   ```
 
+## Skill Resource
+
+The server embeds an MCP skill as a `skill://` resource, served alongside tools:
+
+- **URI**: `skill://ipinfo/usage`
+- **Source**: Mirrors the skill published at `mpak.dev/skills/@nimblebraininc/ipinfo`
+- **Content**: `SKILL_CONTENT` constant in `server.py` (tool selection, context reuse, VPN detection)
+- **Server instructions**: Point the LLM to read the resource before using tools
+
+When updating the skill content, update both:
+1. `server.py` `SKILL_CONTENT` constant (embedded in the server)
+2. `apps/skills/ipinfo/SKILL.md` (published to mpak registry)
+
 ## user_config
 
 API token configured via manifest `user_config`, not hardcoded:
@@ -59,10 +72,13 @@ Privacy detection (VPN/proxy/Tor) is ONLY available via Plus API.
 ## Testing
 
 ```bash
-uv run pytest tests/ -v           # Unit tests
-uv run ruff check src/ tests/     # Lint
-uv run mypy src/                  # Type check
+uv run pytest tests/ -v                          # Unit tests (includes skill resource tests)
+uv run pytest tests-integration/test_skill_llm.py -v  # LLM smoke tests (needs ANTHROPIC_API_KEY)
+uv run ruff check src/ tests/                    # Lint
+uv run mypy src/                                 # Type check
 ```
+
+LLM smoke tests require both `ANTHROPIC_API_KEY` and `IPINFO_API_TOKEN` in `.env`.
 
 ## Releasing
 

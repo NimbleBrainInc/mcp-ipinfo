@@ -11,7 +11,7 @@ This is a version of the MCP Server for IPInfo that implements the complete IPIn
 - **Strongly Typed**: All API responses use Pydantic models for type safety
 - **HTTP Transport**: Supports streamable-http transport with health endpoint
 - **Comprehensive Tools**: 25+ MCP tools covering all IPInfo API endpoints
-- **Backward Compatible**: Maintains the original `get_ip_details` tool for compatibility
+- **Built-in Skill Resource**: Serves a `skill://ipinfo/usage` resource that teaches LLMs optimal tool selection and context reuse patterns
 
 ## Installation
 
@@ -65,6 +65,16 @@ Add this configuration to your Claude Code settings:
   }
 }
 ```
+
+## Skill Resource
+
+The server includes a built-in skill at `skill://ipinfo/usage` that guides LLMs on:
+
+- **Tool selection**: Which tool to use for each intent (general lookup vs. VPN detection vs. WHOIS)
+- **Context reuse**: Carrying IP addresses across follow-up questions
+- **VPN detection**: Using the Plus API (`get_plus_ip_info`) instead of the Core API for privacy flags
+
+The server's `instructions` field tells compatible MCP clients to read this resource before using tools. This is also published as a standalone skill at [mpak.dev/skills/@nimblebraininc/ipinfo](https://mpak.dev/skills/@nimblebraininc/ipinfo).
 
 ## Available MCP Tools
 

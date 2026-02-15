@@ -2,7 +2,7 @@
   "$schema": "https://schemas.nimblebrain.ai/v1/nimblebrain-server.schema.json",
   "name": "ai.nimblebrain/ipinfo",
   "description": "IP intelligence server with geolocation, ASN, company, and privacy detection",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "title": "IPInfo MCP Server",
   "repository": {
     "url": "https://github.com/NimbleBrainInc/mcp-ipinfo",

@@ -15,13 +15,51 @@ from mcp_ipinfo.api_models import (
     MeResponse,
     RangesResponse,
 )
-from mcp_ipinfo.server import mcp
+from mcp_ipinfo.server import SKILL_CONTENT, mcp
 
 
 @pytest.fixture
 def mcp_server():
     """Return the MCP server instance."""
     return mcp
+
+
+class TestSkillResource:
+    """Test the skill resource and server instructions."""
+
+    @pytest.mark.asyncio
+    async def test_initialize_returns_instructions(self, mcp_server):
+        """Server instructions reference the skill resource."""
+        async with Client(mcp_server) as client:
+            result = await client.initialize()
+            assert result.instructions is not None
+            assert "skill://ipinfo/usage" in result.instructions
+
+    @pytest.mark.asyncio
+    async def test_skill_resource_listed(self, mcp_server):
+        """skill://ipinfo/usage appears in resource listing."""
+        async with Client(mcp_server) as client:
+            resources = await client.list_resources()
+            uris = [str(r.uri) for r in resources]
+            assert "skill://ipinfo/usage" in uris
+
+    @pytest.mark.asyncio
+    async def test_skill_resource_readable(self, mcp_server):
+        """Reading the skill resource returns the full skill content."""
+        async with Client(mcp_server) as client:
+            contents = await client.read_resource("skill://ipinfo/usage")
+            text = contents[0].text if hasattr(contents[0], "text") else str(contents[0])
+            assert "Context Reuse" in text
+            assert "get_plus_ip_info" in text
+            assert "VPN Detection" in text
+
+    @pytest.mark.asyncio
+    async def test_skill_content_matches_constant(self, mcp_server):
+        """Resource content matches the SKILL_CONTENT constant."""
+        async with Client(mcp_server) as client:
+            contents = await client.read_resource("skill://ipinfo/usage")
+            text = contents[0].text if hasattr(contents[0], "text") else str(contents[0])
+            assert text == SKILL_CONTENT
 
 
 class TestMCPTools:

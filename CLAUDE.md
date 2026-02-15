@@ -28,12 +28,9 @@ The server embeds an MCP skill as a `skill://` resource, served alongside tools:
 
 - **URI**: `skill://ipinfo/usage`
 - **Source**: Mirrors the skill published at `mpak.dev/skills/@nimblebraininc/ipinfo`
-- **Content**: `SKILL_CONTENT` constant in `server.py` (tool selection, context reuse, VPN detection)
+- **Skill file**: `src/mcp_ipinfo/SKILL.md` (tool selection, context reuse, VPN detection)
 - **Server instructions**: Point the LLM to read the resource before using tools
-
-When updating the skill content, update both:
-1. `server.py` `SKILL_CONTENT` constant (embedded in the server)
-2. `apps/skills/ipinfo/SKILL.md` (published to mpak registry)
+- **Loading**: `SKILL_CONTENT = files("mcp_ipinfo").joinpath("SKILL.md").read_text()` in `server.py`
 
 ## user_config
 

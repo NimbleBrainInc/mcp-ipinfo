@@ -201,3 +201,5 @@ temp/
 *.crt
 credentials.json
 service-account.json
+deps/
+*.mcpb

@@ -1,12 +1,13 @@
 {
   "manifest_version": "0.4",
   "name": "@nimblebraininc/ipinfo",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "IP intelligence server with geolocation, ASN, company, and privacy detection",
   "author": {
     "name": "NimbleBrain Inc",
     "email": "hello@nimblebrain.ai"
   },
+  "icon": "https://static.nimblebrain.ai/icons/ipinfo.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/NimbleBrainInc/mcp-ipinfo"

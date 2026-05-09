@@ -1,6 +1,6 @@
 [project]
 name = "mcp-ipinfo"
-version = "0.3.2"
+version = "0.3.3"
 description = "IP intelligence MCP server with geolocation, ASN, company, and privacy detection"
 readme = "README.md"
 license = "MIT"

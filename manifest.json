@@ -1,7 +1,8 @@
 {
   "manifest_version": "0.4",
   "name": "@nimblebraininc/ipinfo",
-  "version": "0.3.3",
+  "display_name": "IPinfo",
+  "version": "0.3.4",
   "description": "IP intelligence server with geolocation, ASN, company, and privacy detection",
   "author": {
     "name": "NimbleBrain Inc",

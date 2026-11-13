@@ -31,9 +31,10 @@ class TestSkillResource:
     async def test_initialize_returns_instructions(self, mcp_server):
         """Server instructions reference the skill resource."""
         async with Client(mcp_server) as client:
-            result = await client.initialize()
-            assert result.instructions is not None
-            assert "skill://ipinfo/usage" in result.instructions
+            # client.instructions reads whichever negotiation result the protocol era
+            # produced; client.initialize() raises on the modern (server/discover) era.
+            assert client.instructions is not None
+            assert "skill://ipinfo/usage" in client.instructions
 
     @pytest.mark.asyncio
     async def test_skill_resource_listed(self, mcp_server):
@@ -328,3 +329,22 @@ class TestMCPTools:
             async with Client(mcp_server) as client:
                 result = await client.call_tool("get_ip_org", {"ip": "1.2.3.4"})
             assert result is not None
+
+
+class TestToolErrors:
+    """An upstream API failure reaches the caller as a tool error, not a client log message."""
+
+    @pytest.mark.asyncio
+    async def test_api_error_is_a_tool_error(self, mcp_server):
+        from fastmcp.exceptions import ToolError
+
+        from mcp_ipinfo.api_client import IPInfoAPIError
+
+        with patch("mcp_ipinfo.server.get_client") as mock_get_client:
+            mock_client = AsyncMock()
+            mock_client.get_info_by_ip.side_effect = IPInfoAPIError(429, "rate limit exceeded")
+            mock_get_client.return_value = mock_client
+
+            async with Client(mcp_server) as client:
+                with pytest.raises(ToolError, match="API error: rate limit exceeded"):
+                    await client.call_tool("get_ip_info", {"ip": "8.8.8.8"})

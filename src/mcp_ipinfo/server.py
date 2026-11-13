@@ -1,8 +1,11 @@
+import logging
 import os
+import sys
 from importlib.resources import files
 from typing import Any
 
-from fastmcp import Context, FastMCP
+from fastmcp import FastMCP
+from fastmcp.exceptions import ToolError
 from starlette.requests import Request
 from starlette.responses import JSONResponse
 
@@ -19,6 +22,16 @@ from mcp_ipinfo.api_models import (
     ResidentialProxyResponse,
     WhoisSource,
 )
+
+# Diagnostics go to stderr (stdout carries JSON-RPC), never to the client: MCP's logging
+# capability is deprecated as of the 2026-07-28 protocol (SEP-2577). A failure the caller
+# must see is raised as a ToolError.
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    stream=sys.stderr,
+)
+logger = logging.getLogger("mcp_ipinfo")
 
 # Create an MCP server with HTTP transport support
 mcp = FastMCP(
@@ -43,13 +56,13 @@ def ipinfo_skill() -> str:
 _client: IPInfoClient | None = None
 
 
-def get_client(ctx: Context | None = None) -> IPInfoClient:
+def get_client() -> IPInfoClient:
     """Get or create the API client instance."""
     global _client
     if _client is None:
         api_token = os.environ.get("IPINFO_API_TOKEN")
-        if not api_token and ctx:
-            ctx.warning("IPINFO_API_TOKEN is not set - some features may be limited")
+        if not api_token:
+            logger.warning("IPINFO_API_TOKEN is not set - some features may be limited")
         _client = IPInfoClient(api_token=api_token)
     return _client
 
@@ -65,46 +78,43 @@ async def health_check(request: Request) -> JSONResponse:
 
 
 @mcp.tool()
-async def get_ip_info(ip: str | None, ctx: Context | None = None) -> FullResponse:
+async def get_ip_info(ip: str | None) -> FullResponse:
     """Get comprehensive information about an IP address.
 
     Args:
         ip: IP address to lookup. If None, returns info about current IP.
-        ctx: MCP context
 
     Returns:
         Complete IP information including location, ASN, company, privacy, etc.
     """
-    client = get_client(ctx)
+    client = get_client()
     try:
         if ip:
             return await client.get_info_by_ip(ip)
         else:
             return await client.get_current_info()
     except IPInfoAPIError as e:
-        if ctx:
-            ctx.error(f"API error: {e.message}")
-        raise
+        logger.warning("IPinfo API error: %s", e.message)
+        raise ToolError(f"API error: {e.message}") from e
 
 
 @mcp.tool()
-async def get_account_info(ctx: Context | None = None) -> MeResponse:
+async def get_account_info() -> MeResponse:
     """Get IPInfo account information and API limits.
 
     Returns:
         Account information including API limits and available features.
     """
-    client = get_client(ctx)
+    client = get_client()
     try:
         return await client.get_me()
     except IPInfoAPIError as e:
-        if ctx:
-            ctx.error(f"API error: {e.message}")
-        raise
+        logger.warning("IPinfo API error: %s", e.message)
+        raise ToolError(f"API error: {e.message}") from e
 
 
 @mcp.tool()
-async def batch_lookup(ips: list[str], ctx: Context | None = None) -> dict[str, Any]:
+async def batch_lookup(ips: list[str]) -> dict[str, Any]:
     """Batch lookup multiple IP addresses.
 
     Args:
@@ -113,17 +123,16 @@ async def batch_lookup(ips: list[str], ctx: Context | None = None) -> dict[str, 
     Returns:
         Dictionary with IP information for each address.
     """
-    client = get_client(ctx)
+    client = get_client()
     try:
         return await client.batch(ips)
     except IPInfoAPIError as e:
-        if ctx:
-            ctx.error(f"API error: {e.message}")
-        raise
+        logger.warning("IPinfo API error: %s", e.message)
+        raise ToolError(f"API error: {e.message}") from e
 
 
 @mcp.tool()
-async def summarize_ips(ips: list[str], ctx: Context | None = None) -> dict[str, Any]:
+async def summarize_ips(ips: list[str]) -> dict[str, Any]:
     """Summarize a list of IP addresses with statistics and insights.
 
     Args:
@@ -132,18 +141,17 @@ async def summarize_ips(ips: list[str], ctx: Context | None = None) -> dict[str,
     Returns:
         Summary report with statistics and map URL.
     """
-    client = get_client(ctx)
+    client = get_client()
     ips_text = "\n".join(ips)
     try:
         return await client.summarize_ips(ips_text)
     except IPInfoAPIError as e:
-        if ctx:
-            ctx.error(f"API error: {e.message}")
-        raise
+        logger.warning("IPinfo API error: %s", e.message)
+        raise ToolError(f"API error: {e.message}") from e
 
 
 @mcp.tool()
-async def map_ips(ips: list[str], ctx: Context | None = None) -> dict[str, Any]:
+async def map_ips(ips: list[str]) -> dict[str, Any]:
     """Create a visual map of IP address locations.
 
     Args:
@@ -152,21 +160,20 @@ async def map_ips(ips: list[str], ctx: Context | None = None) -> dict[str, Any]:
     Returns:
         Map report with visualization URL.
     """
-    client = get_client(ctx)
+    client = get_client()
     ips_text = "\n".join(ips)
     try:
         return await client.map_ips(ips_text)
     except IPInfoAPIError as e:
-        if ctx:
-            ctx.error(f"API error: {e.message}")
-        raise
+        logger.warning("IPinfo API error: %s", e.message)
+        raise ToolError(f"API error: {e.message}") from e
 
 
 # Company tools
 
 
 @mcp.tool()
-async def get_company_info(ip: str, ctx: Context | None = None) -> CompanyResponse:
+async def get_company_info(ip: str) -> CompanyResponse:
     """Get company information for an IP address.
 
     Args:
@@ -175,20 +182,19 @@ async def get_company_info(ip: str, ctx: Context | None = None) -> CompanyRespon
     Returns:
         Company name, domain, and type.
     """
-    client = get_client(ctx)
+    client = get_client()
     try:
         return await client.get_company(ip)
     except IPInfoAPIError as e:
-        if ctx:
-            ctx.error(f"API error: {e.message}")
-        raise
+        logger.warning("IPinfo API error: %s", e.message)
+        raise ToolError(f"API error: {e.message}") from e
 
 
 # Carrier tools
 
 
 @mcp.tool()
-async def get_carrier_info(ip: str, ctx: Context | None = None) -> CarrierResponse:
+async def get_carrier_info(ip: str) -> CarrierResponse:
     """Get mobile carrier information for an IP address.
 
     Args:
@@ -197,22 +203,19 @@ async def get_carrier_info(ip: str, ctx: Context | None = None) -> CarrierRespon
     Returns:
         Mobile carrier details including MCC and MNC codes.
     """
-    client = get_client(ctx)
+    client = get_client()
     try:
         return await client.get_carrier(ip)
     except IPInfoAPIError as e:
-        if ctx:
-            ctx.error(f"API error: {e.message}")
-        raise
+        logger.warning("IPinfo API error: %s", e.message)
+        raise ToolError(f"API error: {e.message}") from e
 
 
 # Residential proxy and Plus API tools
 
 
 @mcp.tool()
-async def get_residential_proxy_info(
-    ip: str, ctx: Context | None = None
-) -> ResidentialProxyResponse:
+async def get_residential_proxy_info(ip: str) -> ResidentialProxyResponse:
     """Detect if an IP is a residential proxy and get activity details.
 
     Identifies IPs associated with residential proxy services, including mobile/carrier
@@ -225,17 +228,16 @@ async def get_residential_proxy_info(
         Residential proxy data including service name, last seen date, and activity
         percentage. Returns empty fields if the IP is not a residential proxy.
     """
-    client = get_client(ctx)
+    client = get_client()
     try:
         return await client.get_residential_proxy(ip)
     except IPInfoAPIError as e:
-        if ctx:
-            ctx.error(f"API error: {e.message}")
-        raise
+        logger.warning("IPinfo API error: %s", e.message)
+        raise ToolError(f"API error: {e.message}") from e
 
 
 @mcp.tool()
-async def get_plus_ip_info(ip: str, ctx: Context | None = None) -> PlusResponse:
+async def get_plus_ip_info(ip: str) -> PlusResponse:
     """Get comprehensive IP intelligence using the Plus API.
 
     Returns detailed geolocation, ASN information, privacy/anonymity detection,
@@ -252,13 +254,12 @@ async def get_plus_ip_info(ip: str, ctx: Context | None = None) -> PlusResponse:
         - anonymous: VPN, proxy, Tor, relay detection
         - Flags: is_anonymous, is_hosting, is_mobile, is_anycast, is_satellite
     """
-    client = get_client(ctx)
+    client = get_client()
     try:
         return await client.get_plus_info(ip)
     except IPInfoAPIError as e:
-        if ctx:
-            ctx.error(f"API error: {e.message}")
-        raise
+        logger.warning("IPinfo API error: %s", e.message)
+        raise ToolError(f"API error: {e.message}") from e
 
 
 # Domains tools
@@ -266,7 +267,7 @@ async def get_plus_ip_info(ip: str, ctx: Context | None = None) -> PlusResponse:
 
 @mcp.tool()
 async def get_hosted_domains(
-    ip: str, ctx: Context | None = None, page: int | None = None, limit: int | None = None
+    ip: str, page: int | None = None, limit: int | None = None
 ) -> DomainsResponse:
     """Get domains hosted on an IP address.
 
@@ -278,20 +279,19 @@ async def get_hosted_domains(
     Returns:
         List of domains hosted on the IP address.
     """
-    client = get_client(ctx)
+    client = get_client()
     try:
         return await client.get_domains(ip, page, limit)
     except IPInfoAPIError as e:
-        if ctx:
-            ctx.error(f"API error: {e.message}")
-        raise
+        logger.warning("IPinfo API error: %s", e.message)
+        raise ToolError(f"API error: {e.message}") from e
 
 
 # Ranges tools
 
 
 @mcp.tool()
-async def get_ip_ranges(domain: str, ctx: Context | None = None) -> RangesResponse:
+async def get_ip_ranges(domain: str) -> RangesResponse:
     """Get IP ranges owned by a domain/organization.
 
     Args:
@@ -300,20 +300,19 @@ async def get_ip_ranges(domain: str, ctx: Context | None = None) -> RangesRespon
     Returns:
         IP ranges information including IPv4 and IPv6 blocks.
     """
-    client = get_client(ctx)
+    client = get_client()
     try:
         return await client.get_ranges(domain)
     except IPInfoAPIError as e:
-        if ctx:
-            ctx.error(f"API error: {e.message}")
-        raise
+        logger.warning("IPinfo API error: %s", e.message)
+        raise ToolError(f"API error: {e.message}") from e
 
 
 # Abuse tools
 
 
 @mcp.tool()
-async def get_abuse_contact(ip: str, ctx: Context | None = None) -> AbuseResponse:
+async def get_abuse_contact(ip: str) -> AbuseResponse:
     """Get abuse contact information for an IP address.
 
     Args:
@@ -322,13 +321,12 @@ async def get_abuse_contact(ip: str, ctx: Context | None = None) -> AbuseRespons
     Returns:
         Abuse contact details including email, phone, and address.
     """
-    client = get_client(ctx)
+    client = get_client()
     try:
         return await client.get_abuse(ip)
     except IPInfoAPIError as e:
-        if ctx:
-            ctx.error(f"API error: {e.message}")
-        raise
+        logger.warning("IPinfo API error: %s", e.message)
+        raise ToolError(f"API error: {e.message}") from e
 
 
 # WHOIS tools
@@ -336,7 +334,7 @@ async def get_abuse_contact(ip: str, ctx: Context | None = None) -> AbuseRespons
 
 @mcp.tool()
 async def whois_lookup_by_ip(
-    ip: str, ctx: Context | None = None, page: int | None = None, source: str | None = None
+    ip: str, page: int | None = None, source: str | None = None
 ) -> dict[str, Any]:
     """WHOIS lookup by IP address or IP range.
 
@@ -348,20 +346,19 @@ async def whois_lookup_by_ip(
     Returns:
         WHOIS records for the IP or range.
     """
-    client = get_client(ctx)
+    client = get_client()
     whois_source = WhoisSource(source) if source else None
     try:
         result = await client.get_whois_net_by_ip(ip, page, whois_source)
         return result.model_dump(exclude_none=True)
     except IPInfoAPIError as e:
-        if ctx:
-            ctx.error(f"API error: {e.message}")
-        raise
+        logger.warning("IPinfo API error: %s", e.message)
+        raise ToolError(f"API error: {e.message}") from e
 
 
 @mcp.tool()
 async def whois_lookup_by_domain(
-    domain: str, ctx: Context | None = None, page: int | None = None, source: str | None = None
+    domain: str, page: int | None = None, source: str | None = None
 ) -> dict[str, Any]:
     """WHOIS lookup by organization domain.
 
@@ -373,20 +370,19 @@ async def whois_lookup_by_domain(
     Returns:
         WHOIS records for the domain.
     """
-    client = get_client(ctx)
+    client = get_client()
     whois_source = WhoisSource(source) if source else None
     try:
         result = await client.get_whois_net_by_domain(domain, page, whois_source)
         return result.model_dump(exclude_none=True)
     except IPInfoAPIError as e:
-        if ctx:
-            ctx.error(f"API error: {e.message}")
-        raise
+        logger.warning("IPinfo API error: %s", e.message)
+        raise ToolError(f"API error: {e.message}") from e
 
 
 @mcp.tool()
 async def whois_lookup_by_asn(
-    asn: int, ctx: Context | None = None, page: int | None = None, source: str | None = None
+    asn: int, page: int | None = None, source: str | None = None
 ) -> dict[str, Any]:
     """WHOIS lookup by ASN.
 
@@ -398,22 +394,21 @@ async def whois_lookup_by_asn(
     Returns:
         WHOIS records for the ASN.
     """
-    client = get_client(ctx)
+    client = get_client()
     whois_source = WhoisSource(source) if source else None
     try:
         result = await client.get_whois_net_by_asn(asn, page, whois_source)
         return result.model_dump(exclude_none=True)
     except IPInfoAPIError as e:
-        if ctx:
-            ctx.error(f"API error: {e.message}")
-        raise
+        logger.warning("IPinfo API error: %s", e.message)
+        raise ToolError(f"API error: {e.message}") from e
 
 
 # Single field tools
 
 
 @mcp.tool()
-async def get_ip_city(ctx: Context | None = None, ip: str | None = None) -> str:
+async def get_ip_city(ip: str | None = None) -> str:
     """Get just the city for an IP address.
 
     Args:
@@ -422,20 +417,19 @@ async def get_ip_city(ctx: Context | None = None, ip: str | None = None) -> str:
     Returns:
         City name.
     """
-    client = get_client(ctx)
+    client = get_client()
     try:
         if ip:
             return await client.get_city_by_ip(ip)
         else:
             return await client.get_current_city()
     except IPInfoAPIError as e:
-        if ctx:
-            ctx.error(f"API error: {e.message}")
-        raise
+        logger.warning("IPinfo API error: %s", e.message)
+        raise ToolError(f"API error: {e.message}") from e
 
 
 @mcp.tool()
-async def get_ip_country(ctx: Context | None = None, ip: str | None = None) -> str:
+async def get_ip_country(ip: str | None = None) -> str:
     """Get just the country code for an IP address.
 
     Args:
@@ -444,20 +438,19 @@ async def get_ip_country(ctx: Context | None = None, ip: str | None = None) -> s
     Returns:
         Two-letter country code (ISO-3166).
     """
-    client = get_client(ctx)
+    client = get_client()
     try:
         if ip:
             return await client.get_country_by_ip(ip)
         else:
             return await client.get_current_country()
     except IPInfoAPIError as e:
-        if ctx:
-            ctx.error(f"API error: {e.message}")
-        raise
+        logger.warning("IPinfo API error: %s", e.message)
+        raise ToolError(f"API error: {e.message}") from e
 
 
 @mcp.tool()
-async def get_ip_region(ctx: Context | None = None, ip: str | None = None) -> str:
+async def get_ip_region(ip: str | None = None) -> str:
     """Get just the region/state for an IP address.
 
     Args:
@@ -466,20 +459,19 @@ async def get_ip_region(ctx: Context | None = None, ip: str | None = None) -> st
     Returns:
         Region or state name.
     """
-    client = get_client(ctx)
+    client = get_client()
     try:
         if ip:
             return await client.get_region_by_ip(ip)
         else:
             return await client.get_current_region()
     except IPInfoAPIError as e:
-        if ctx:
-            ctx.error(f"API error: {e.message}")
-        raise
+        logger.warning("IPinfo API error: %s", e.message)
+        raise ToolError(f"API error: {e.message}") from e
 
 
 @mcp.tool()
-async def get_ip_location(ctx: Context | None = None, ip: str | None = None) -> str:
+async def get_ip_location(ip: str | None = None) -> str:
     """Get just the coordinates for an IP address.
 
     Args:
@@ -488,20 +480,19 @@ async def get_ip_location(ctx: Context | None = None, ip: str | None = None) -> 
     Returns:
         Latitude,longitude coordinates.
     """
-    client = get_client(ctx)
+    client = get_client()
     try:
         if ip:
             return await client.get_location_by_ip(ip)
         else:
             return await client.get_current_location()
     except IPInfoAPIError as e:
-        if ctx:
-            ctx.error(f"API error: {e.message}")
-        raise
+        logger.warning("IPinfo API error: %s", e.message)
+        raise ToolError(f"API error: {e.message}") from e
 
 
 @mcp.tool()
-async def get_ip_postal(ctx: Context | None = None, ip: str | None = None) -> str:
+async def get_ip_postal(ip: str | None = None) -> str:
     """Get just the postal code for an IP address.
 
     Args:
@@ -510,20 +501,19 @@ async def get_ip_postal(ctx: Context | None = None, ip: str | None = None) -> st
     Returns:
         Postal or ZIP code.
     """
-    client = get_client(ctx)
+    client = get_client()
     try:
         if ip:
             return await client.get_postal_by_ip(ip)
         else:
             return await client.get_current_postal()
     except IPInfoAPIError as e:
-        if ctx:
-            ctx.error(f"API error: {e.message}")
-        raise
+        logger.warning("IPinfo API error: %s", e.message)
+        raise ToolError(f"API error: {e.message}") from e
 
 
 @mcp.tool()
-async def get_ip_timezone(ctx: Context | None = None, ip: str | None = None) -> str:
+async def get_ip_timezone(ip: str | None = None) -> str:
     """Get just the timezone for an IP address.
 
     Args:
@@ -532,20 +522,19 @@ async def get_ip_timezone(ctx: Context | None = None, ip: str | None = None) -> 
     Returns:
         IANA timezone string.
     """
-    client = get_client(ctx)
+    client = get_client()
     try:
         if ip:
             return await client.get_timezone_by_ip(ip)
         else:
             return await client.get_current_timezone()
     except IPInfoAPIError as e:
-        if ctx:
-            ctx.error(f"API error: {e.message}")
-        raise
+        logger.warning("IPinfo API error: %s", e.message)
+        raise ToolError(f"API error: {e.message}") from e
 
 
 @mcp.tool()
-async def get_ip_hostname(ctx: Context | None = None, ip: str | None = None) -> str:
+async def get_ip_hostname(ip: str | None = None) -> str:
     """Get just the hostname for an IP address.
 
     Args:
@@ -554,20 +543,19 @@ async def get_ip_hostname(ctx: Context | None = None, ip: str | None = None) -> 
     Returns:
         Hostname.
     """
-    client = get_client(ctx)
+    client = get_client()
     try:
         if ip:
             return await client.get_hostname_by_ip(ip)
         else:
             return await client.get_current_hostname()
     except IPInfoAPIError as e:
-        if ctx:
-            ctx.error(f"API error: {e.message}")
-        raise
+        logger.warning("IPinfo API error: %s", e.message)
+        raise ToolError(f"API error: {e.message}") from e
 
 
 @mcp.tool()
-async def get_ip_org(ctx: Context | None = None, ip: str | None = None) -> str:
+async def get_ip_org(ip: str | None = None) -> str:
     """Get just the organization/ASN for an IP address.
 
     Args:
@@ -576,16 +564,15 @@ async def get_ip_org(ctx: Context | None = None, ip: str | None = None) -> str:
     Returns:
         ASN and organization name.
     """
-    client = get_client(ctx)
+    client = get_client()
     try:
         if ip:
             return await client.get_org_by_ip(ip)
         else:
             return await client.get_current_org()
     except IPInfoAPIError as e:
-        if ctx:
-            ctx.error(f"API error: {e.message}")
-        raise
+        logger.warning("IPinfo API error: %s", e.message)
+        raise ToolError(f"API error: {e.message}") from e
 
 
 # Create ASGI application for HTTP deployment
